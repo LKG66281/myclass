@@ -30,9 +30,12 @@ const uiConfig = {
 };
 
 // DOM Elements
+const content = document.getElementById("content");
 const loader = document.getElementById("loader");
+const usernameSelect = document.getElementById("username-select");
 const adminPanel = document.getElementById("admin-panel");
 const publicView = document.getElementById("public-view");
+const usernameDropdown = document.getElementById("username-dropdown");
 const usernameInput = document.getElementById("username-input");
 const subjectInput = document.getElementById("subject-input");
 const addAdmissionBtn = document.getElementById("add-admission-btn");
@@ -50,21 +53,34 @@ const ADMIN_EMAIL = "siddharth";
 // Authentication state listener
 onAuthStateChanged(auth, (user) => {
   loader.style.display = "none";
+  content.style.display = "block";
   if (user) {
     if (user.email === ADMIN_EMAIL) {
-      adminPanel.style.display = "block";
+      usernameSelect.style.display = "block";
+      adminPanel.style.display = "none";
       publicView.style.display = "none";
-      loadDropdownOptions();
-      loadPdfList();
+      loadUsernameDropdown();
     } else {
+      usernameSelect.style.display = "none";
       adminPanel.style.display = "none";
       publicView.style.display = "block";
-      loadDropdownOptions();
+      loadPeopleDropdown();
     }
   } else {
+    usernameSelect.style.display = "none";
     adminPanel.style.display = "none";
     publicView.style.display = "none";
     ui.start("#firebaseui-auth-container", uiConfig);
+  }
+});
+
+// Username dropdown change handler
+usernameDropdown.addEventListener("change", () => {
+  if (usernameDropdown.value) {
+    usernameSelect.style.display = "none";
+    adminPanel.style.display = "block";
+    loadPeopleDropdown();
+    loadPdfList();
   }
 });
 
@@ -73,7 +89,7 @@ logoutBtn.addEventListener("click", () => {
   auth.signOut();
 });
 
-// Add Admission (Username + Subject)
+// Add Admission
 addAdmissionBtn.addEventListener("click", async () => {
   const username = usernameInput.value.trim();
   const subject = subjectInput.value.trim();
@@ -87,6 +103,7 @@ addAdmissionBtn.addEventListener("click", async () => {
       alert("Admission added!");
       usernameInput.value = "";
       subjectInput.value = "";
+      loadUsernameDropdown(); // Refresh username dropdown
     } catch (error) {
       alert("Error adding admission: " + error.message);
     }
@@ -95,7 +112,7 @@ addAdmissionBtn.addEventListener("click", async () => {
   }
 });
 
-// Update Dropdown Options
+// Update Total People Dropdown
 updateMaxPeopleBtn.addEventListener("click", async () => {
   const maxPeople = parseInt(maxPeopleInput.value);
   if (maxPeople > 0 && maxPeople <= 100) {
@@ -106,7 +123,7 @@ updateMaxPeopleBtn.addEventListener("click", async () => {
       });
       alert("Dropdown updated!");
       maxPeopleInput.value = "";
-      loadDropdownOptions();
+      loadPeopleDropdown();
     } catch (error) {
       alert("Error updating dropdown: " + error.message);
     }
@@ -115,8 +132,29 @@ updateMaxPeopleBtn.addEventListener("click", async () => {
   }
 });
 
-// Load Dropdown Options
-async function loadDropdownOptions() {
+// Load Username Dropdown
+function loadUsernameDropdown() {
+  onSnapshot(collection(db, "admissions"), (snapshot) => {
+    usernameDropdown.innerHTML = '<option value="">Select a username</option>';
+    const usernames = new Set();
+    snapshot.forEach((doc) => {
+      const data = doc.data();
+      if (!usernames.has(data.username)) {
+        usernames.add(data.username);
+        const option = document.createElement("option");
+        option.value = data.username;
+        option.text = data.username;
+        usernameDropdown.appendChild(option);
+      }
+    });
+  }, (error) => {
+    console.error("Error loading usernames:", error);
+    usernameDropdown.innerHTML = '<option value="">Error loading usernames</option>';
+  });
+}
+
+// Load Total People Dropdown
+async function loadPeopleDropdown() {
   try {
     const docRef = doc(db, "settings", "maxPeople");
     const docSnap = await getDoc(docRef);
