@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Class Management</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      padding: 15px;
+      background-color: #f8f9fa;
+    }
+    .container {
+      max-width: 600px;
+    }
+    .admin-panel, .public-view {
+      display: none;
+    }
+    .form-control, .btn, .form-select, .form-control-file {
+      margin-bottom: 15px;
+      border-radius: 8px;
+    }
+    .dropdown-menu {
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    #firebaseui-auth-container {
+      margin-top: 20px;
+    }
+    #loader {
+      margin-top: 50px;
+    }
+    h3, h4 {
+      color: #343a40;
+    }
+    .pdf-list {
+      list-style: none;
+      padding: 0;
+    }
+    .pdf-list li {
+      margin-bottom: 10px;
+    }
+    .pdf-list a {
+      color: #007bff;
+      text-decoration: none;
+    }
+    .pdf-list a:hover {
+      text-decoration: underline;
+    }
+    /* Mobile-specific styles */
+    @media (max-width: 576px) {
+      body {
+        padding: 10px;
+      }
+      .container {
+        padding: 0;
+      }
+      .form-control, .btn, .form-select, .form-control-file {
+        font-size: 16px;
+        padding: 12px;
+      }
+      h3 {
+        font-size: 1.5rem;
+      }
+      h4 {
+        font-size: 1.2rem;
+      }
+      .btn, .form-control-file {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- FirebaseUI Login -->
+    <div id="firebaseui-auth-container"></div>
+    <div id="loader" class="text-center">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+    </div>
+
+    <!-- Admin Panel -->
+    <div class="admin-panel" id="admin-panel">
+      <h3>Admin Dashboard</h3>
+      <button id="logout-btn" class="btn btn-danger">Logout</button>
+      
+      <!-- Add Admission (Username + Subject) -->
+      <h4>Add Admission</h4>
+      <input type="text" id="username-input" class="form-control" placeholder="Enter username">
+      <input type="text" id="subject-input" class="form-control" placeholder="Enter subject">
+      <button id="add-admission-btn" class="btn btn-primary">Add Admission</button>
+      
+      <!-- Update Dropdown -->
+      <h4>Update Total People</h4>
+      <input type="number" id="max-people-input" class="form-control" placeholder="Max people (e.g., 10)">
+      <button id="update-max-people-btn" class="btn btn-primary">Update Dropdown</button>
+      
+      <!-- PDF Uploader -->
+      <h4>Upload PDF</h4>
+      <input type="file" id="pdf-input" class="form-control-file" accept=".pdf">
+      <button id="upload-pdf-btn" class="btn btn-primary">Upload PDF</button>
+      <h4>Uploaded PDFs</h4>
+      <ul id="pdf-list" class="pdf-list"></ul>
+    </div>
+
+    <!-- Public View -->
+    <div class="public-view" id="public-view">
+      <h3>Total People</h3>
+      <select id="people-dropdown" class="form-select">
+        <option>Loading...</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js"></script>
+  <script src="https://cdn.firebase.com/libs/firebaseui/6.1.0/firebaseui.js"></script>
+  <link type="text/css" rel="stylesheet" href="https://cdn.firebase.com/libs/firebaseui/6.1.0/firebaseui.css" />
+
+  <!-- Main Script -->
+  <script src="app.js"></script>
+</body>
+</html>
