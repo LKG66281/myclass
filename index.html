@@ -13,7 +13,7 @@
     .container {
       max-width: 600px;
     }
-    .admin-panel, .public-view, .username-select, .content {
+    .login-page, .admin-panel, .public-view {
       display: none;
     }
     .form-control, .btn, .form-select, .form-control-file {
@@ -23,9 +23,6 @@
     .dropdown-menu {
       max-height: 200px;
       overflow-y: auto;
-    }
-    #firebaseui-auth-container {
-      margin-top: 20px;
     }
     #loader {
       margin-top: 50px;
@@ -72,21 +69,22 @@
   </style>
 </head>
 <body>
-  <div class="container content" id="content">
-    <!-- FirebaseUI Login -->
-    <div id="firebaseui-auth-container"></div>
+  <div class="container">
+    <!-- Loader -->
     <div id="loader" class="text-center">
       <div class="spinner-border text-primary" role="status">
         <span class="visually-hidden">Loading...</span>
       </div>
     </div>
 
-    <!-- Username Dropdown (Admin Only) -->
-    <div class="username-select" id="username-select">
-      <h3>Select Username</h3>
-      <select id="username-dropdown" class="form-select">
-        <option value="">Select a username</option>
+    <!-- Login Page -->
+    <div class="login-page" id="login-page">
+      <h3>Login</h3>
+      <select id="login-username" class="form-select">
+        <option value="siddharth">siddharth</option>
       </select>
+      <input type="password" id="login-password" class="form-control" placeholder="Enter password">
+      <button id="login-btn" class="btn btn-primary">Login</button>
     </div>
 
     <!-- Admin Panel -->
@@ -98,6 +96,7 @@
       <h4>Add Admission</h4>
       <input type="text" id="username-input" class="form-control" placeholder="Enter username">
       <input type="text" id="subject-input" class="form-control" placeholder="Enter subject">
+      <input type="password" id="user-password-input" class="form-control" placeholder="Enter user password">
       <button id="add-admission-btn" class="btn btn-primary">Add Admission</button>
       
       <!-- Update Total People -->
@@ -111,9 +110,15 @@
       <button id="upload-pdf-btn" class="btn btn-primary">Upload PDF</button>
       <h4>Uploaded PDFs</h4>
       <ul id="pdf-list" class="pdf-list"></ul>
+      
+      <!-- Total People Dropdown (Admin View) -->
+      <h4>Total People (Admin View)</h4>
+      <select id="admin-people-dropdown" class="form-select">
+        <option>Loading...</option>
+      </select>
     </div>
 
-    <!-- Public View -->
+    <!-- Public View (Normal Users) -->
     <div class="public-view" id="public-view">
       <h3>Total People</h3>
       <select id="people-dropdown" class="form-select">
@@ -127,8 +132,6 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js"></script>
-  <script src="https://cdn.firebase.com/libs/firebaseui/6.1.0/firebaseui.js"></script>
-  <link type="text/css" rel="stylesheet" href="https://cdn.firebase.com/libs/firebaseui/6.1.0/firebaseui.css" />
 
   <!-- Main Script -->
   <script src="app.js"></script>
