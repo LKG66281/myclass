@@ -1,6 +1,6 @@
 // Firebase imports
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 import { getFirestore, collection, addDoc, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
 
@@ -21,26 +21,21 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
-// Initialize FirebaseUI
-const ui = new firebaseui.auth.AuthUI(auth);
-const uiConfig = {
-  signInOptions: ["password"],
-  signInSuccessUrl: window.location.href,
-  signInFlow: "redirect"
-};
-
 // DOM Elements
-const content = document.getElementById("content");
 const loader = document.getElementById("loader");
-const usernameSelect = document.getElementById("username-select");
+const loginPage = document.getElementById("login-page");
 const adminPanel = document.getElementById("admin-panel");
 const publicView = document.getElementById("public-view");
-const usernameDropdown = document.getElementById("username-dropdown");
+const loginUsername = document.getElementById("login-username");
+const loginPassword = document.getElementById("login-password");
+const loginBtn = document.getElementById("login-btn");
 const usernameInput = document.getElementById("username-input");
 const subjectInput = document.getElementById("subject-input");
+const userPasswordInput = document.getElementById("user-password-input");
 const addAdmissionBtn = document.getElementById("add-admission-btn");
 const maxPeopleInput = document.getElementById("max-people-input");
 const updateMaxPeopleBtn = document.getElementById("update-max-people-btn");
+const adminPeopleDropdown = document.getElementById("admin-people-dropdown");
 const peopleDropdown = document.getElementById("people-dropdown");
 const logoutBtn = document.getElementById("logout-btn");
 const pdfInput = document.getElementById("pdf-input");
@@ -50,37 +45,47 @@ const pdfList = document.getElementById("pdf-list");
 // Admin email
 const ADMIN_EMAIL = "siddharth";
 
+// Initialize page
+loader.style.display = "block";
+loginPage.style.display = "none";
+adminPanel.style.display = "none";
+publicView.style.display = "none";
+
 // Authentication state listener
 onAuthStateChanged(auth, (user) => {
   loader.style.display = "none";
-  content.style.display = "block";
   if (user) {
+    loginPage.style.display = "none";
     if (user.email === ADMIN_EMAIL) {
-      usernameSelect.style.display = "block";
-      adminPanel.style.display = "none";
+      adminPanel.style.display = "block";
       publicView.style.display = "none";
-      loadUsernameDropdown();
+      loadPeopleDropdown(true); // Load for admin
+      loadPdfList();
     } else {
-      usernameSelect.style.display = "none";
       adminPanel.style.display = "none";
       publicView.style.display = "block";
-      loadPeopleDropdown();
+      loadPeopleDropdown(false); // Load for normal user
     }
   } else {
-    usernameSelect.style.display = "none";
+    loginPage.style.display = "block";
     adminPanel.style.display = "none";
     publicView.style.display = "none";
-    ui.start("#firebaseui-auth-container", uiConfig);
+    loadLoginDropdown();
   }
 });
 
-// Username dropdown change handler
-usernameDropdown.addEventListener("change", () => {
-  if (usernameDropdown.value) {
-    usernameSelect.style.display = "none";
-    adminPanel.style.display = "block";
-    loadPeopleDropdown();
-    loadPdfList();
+// Login
+loginBtn.addEventListener("click", async () => {
+  const username = loginUsername.value;
+  const password = loginPassword.value;
+  if (username && password) {
+    try {
+      await signInWithEmailAndPassword(auth, username, password);
+    } catch (error) {
+      alert("Login failed: " + error.message);
+    }
+  } else {
+    alert("Please select a username and enter a password.");
   }
 });
 
@@ -93,22 +98,27 @@ logoutBtn.addEventListener("click", () => {
 addAdmissionBtn.addEventListener("click", async () => {
   const username = usernameInput.value.trim();
   const subject = subjectInput.value.trim();
-  if (username && subject) {
+  const password = userPasswordInput.value;
+  if (username && subject && password) {
     try {
+      // Register new user in Firebase Auth
+      await createUserWithEmailAndPassword(auth, username, password);
+      // Add to admissions
       await addDoc(collection(db, "admissions"), {
         username,
         subject,
         timestamp: new Date()
       });
-      alert("Admission added!");
+      alert("Admission added and user registered!");
       usernameInput.value = "";
       subjectInput.value = "";
-      loadUsernameDropdown(); // Refresh username dropdown
+      userPasswordInput.value = "";
+      loadLoginDropdown(); // Refresh login dropdown
     } catch (error) {
       alert("Error adding admission: " + error.message);
     }
   } else {
-    alert("Please enter both username and subject.");
+    alert("Please enter username, subject, and password.");
   }
 });
 
@@ -123,7 +133,7 @@ updateMaxPeopleBtn.addEventListener("click", async () => {
       });
       alert("Dropdown updated!");
       maxPeopleInput.value = "";
-      loadPeopleDropdown();
+      loadPeopleDropdown(true);
     } catch (error) {
       alert("Error updating dropdown: " + error.message);
     }
@@ -132,11 +142,11 @@ updateMaxPeopleBtn.addEventListener("click", async () => {
   }
 });
 
-// Load Username Dropdown
-function loadUsernameDropdown() {
+// Load Login Dropdown
+function loadLoginDropdown() {
   onSnapshot(collection(db, "admissions"), (snapshot) => {
-    usernameDropdown.innerHTML = '<option value="">Select a username</option>';
-    const usernames = new Set();
+    loginUsername.innerHTML = '<option value="siddharth">siddharth</option>';
+    const usernames = new Set(["siddharth"]);
     snapshot.forEach((doc) => {
       const data = doc.data();
       if (!usernames.has(data.username)) {
@@ -144,35 +154,37 @@ function loadUsernameDropdown() {
         const option = document.createElement("option");
         option.value = data.username;
         option.text = data.username;
-        usernameDropdown.appendChild(option);
+        loginUsername.appendChild(option);
       }
     });
   }, (error) => {
-    console.error("Error loading usernames:", error);
-    usernameDropdown.innerHTML = '<option value="">Error loading usernames</option>';
+    console.error("Error loading login dropdown:", error);
+    loginUsername.innerHTML = '<option value="siddharth">siddharth</option>';
   });
 }
 
 // Load Total People Dropdown
-async function loadPeopleDropdown() {
+async function loadPeopleDropdown(isAdmin) {
   try {
     const docRef = doc(db, "settings", "maxPeople");
     const docSnap = await getDoc(docRef);
-    peopleDropdown.innerHTML = "";
+    const targetDropdown = isAdmin ? adminPeopleDropdown : peopleDropdown;
+    targetDropdown.innerHTML = "";
     if (docSnap.exists()) {
       const maxPeople = docSnap.data().maxPeople;
       for (let i = 1; i <= maxPeople; i++) {
         const option = document.createElement("option");
         option.value = i;
         option.text = i;
-        peopleDropdown.appendChild(option);
+        targetDropdown.appendChild(option);
       }
     } else {
-      peopleDropdown.innerHTML = "<option>No options available</option>";
+      targetDropdown.innerHTML = "<option>No options available</option>";
     }
   } catch (error) {
     console.error("Error loading dropdown:", error);
-    peopleDropdown.innerHTML = "<option>Error loading options</option>";
+    const targetDropdown = isAdmin ? adminPeopleDropdown : peopleDropdown;
+    targetDropdown.innerHTML = "<option>Error loading options</option>";
   }
 }
 
