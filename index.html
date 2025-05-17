@@ -13,7 +13,7 @@
     .container {
       max-width: 600px;
     }
-    .admin-panel, .public-view {
+    .admin-panel, .public-view, .username-select, .content {
       display: none;
     }
     .form-control, .btn, .form-select, .form-control-file {
@@ -65,14 +65,14 @@
       h4 {
         font-size: 1.2rem;
       }
-      .btn, .form-control-file {
+      .btn, .form-control-file, .form-select {
         width: 100%;
       }
     }
   </style>
 </head>
 <body>
-  <div class="container">
+  <div class="container content" id="content">
     <!-- FirebaseUI Login -->
     <div id="firebaseui-auth-container"></div>
     <div id="loader" class="text-center">
@@ -81,18 +81,26 @@
       </div>
     </div>
 
+    <!-- Username Dropdown (Admin Only) -->
+    <div class="username-select" id="username-select">
+      <h3>Select Username</h3>
+      <select id="username-dropdown" class="form-select">
+        <option value="">Select a username</option>
+      </select>
+    </div>
+
     <!-- Admin Panel -->
     <div class="admin-panel" id="admin-panel">
       <h3>Admin Dashboard</h3>
       <button id="logout-btn" class="btn btn-danger">Logout</button>
       
-      <!-- Add Admission (Username + Subject) -->
+      <!-- Add Admission -->
       <h4>Add Admission</h4>
       <input type="text" id="username-input" class="form-control" placeholder="Enter username">
       <input type="text" id="subject-input" class="form-control" placeholder="Enter subject">
       <button id="add-admission-btn" class="btn btn-primary">Add Admission</button>
       
-      <!-- Update Dropdown -->
+      <!-- Update Total People -->
       <h4>Update Total People</h4>
       <input type="number" id="max-people-input" class="form-control" placeholder="Max people (e.g., 10)">
       <button id="update-max-people-btn" class="btn btn-primary">Update Dropdown</button>
